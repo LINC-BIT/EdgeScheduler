@@ -1,0 +1,7 @@
+loguru==0.6.0
+matplotlib==3.7.4
+matplotlib==2.2.0
+numpy==1.23.5
+ray==2.10.0
+torch==1.10.0
+torchvision==0.10.0
