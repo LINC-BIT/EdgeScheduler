@@ -29,7 +29,7 @@ class DemoReporter(Reporter):
             self.jobs_metrics[job_id][k] = [(k1, v1) for k1, v1 in self.jobs_metrics_by_time[job_id][k].items()]
 
     def accumulate_schedule(self, time, schedule):
-        self.schedules += [{'schedule': schedule, 'time': time}]
+        self.schedules += [{'schedule': schedule if schedule is not None else {}, 'time': time}]
 
     def report_by_text(self):
         jobs_avg_metrics = {}
@@ -78,13 +78,13 @@ class DemoReporter(Reporter):
             f.write(json.dumps(data, indent=2))
 
         if not isinstance(data, list) or not data:
-            print("警告：JSON数据为空或格式不正确，无法绘制图表。")
+            # print("警告：JSON数据为空或格式不正确，无法绘制图表。")
             return
 
         # 提取所有唯一的时间点并排序
         times = sorted(list({item['time'] for item in data if 'time' in item}))
         if not times:
-            print("警告：数据中未找到有效的时间点。")
+            # print("警告：数据中未找到有效的时间点。")
             return
 
         # 提取所有唯一的任务名称并排序，以保证堆叠顺序一致
@@ -95,7 +95,7 @@ class DemoReporter(Reporter):
         )))
         
         if not all_jobs:
-            print("警告：数据中未找到任何任务。")
+            # print("警告：数据中未找到任何任务。")
             return
 
         # 创建一个从时间点到调度详情的映射，方便快速查找

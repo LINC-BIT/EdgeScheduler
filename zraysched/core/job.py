@@ -14,7 +14,7 @@ class JobActor(ABC):
         return self.metrics
 
     @abstractmethod
-    async def run_for(self, current_time: int, duration: float):
+    async def run_for(self, current_time: int, duration: float, ensure_no_side_effects=False, hyps=None):
         pass
 
 

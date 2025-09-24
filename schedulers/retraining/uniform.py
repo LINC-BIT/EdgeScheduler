@@ -13,7 +13,7 @@ class UniformScheduler(Scheduler):
             AppEventType.TRAINING_FINISH
         ]
     
-    def run(self, jobs):
+    async def run(self, jobs):
         num_training_jobs = len([job_id for job_id, _ in jobs.items() if 'train' in job_id])
         num_inference_jobs = len([job_id for job_id, _ in jobs.items() if 'inference' in job_id])
 

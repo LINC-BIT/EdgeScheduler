@@ -56,7 +56,7 @@ class SimulatorActor:
             logger.warning(f"⚠️ [Simulator] Unknown event type '{event.event_type}' for app '{event.app_id}'.")
             
     async def reschedule(self):
-        new_schedule = self.scheduler.run(self.running_jobs)
+        new_schedule = await self.scheduler.run.remote(self.running_jobs)
         logger.debug(f"🔄 [Simulator] Schedule updated: {new_schedule}")
         self.schedule = new_schedule
 
@@ -76,11 +76,18 @@ class SimulatorActor:
                 for cur_app_event in cur_app_events:
                     await self.simulate_event(cur_app_event)
 
-                if any(cur_app_event.event_type in self.scheduler.reacted_events_type() for cur_app_event in cur_app_events):
+                if any(cur_app_event.event_type in ray.get(self.scheduler.reacted_events_type.remote()) for cur_app_event in cur_app_events):
                     await self.reschedule()
                     self.cur_window_scheduled = True
             
-            if SchedulingTiming.EACH_WINDOW in self.scheduler.reacted_events_type() and not self.cur_window_scheduled:
+            if SchedulingTiming.EACH_WINDOW in ray.get(self.scheduler.reacted_events_type.remote()) and not self.cur_window_scheduled:
+                await self.reschedule()
+                self.cur_window_scheduled = True
+
+            if SchedulingTiming.PERIODIC in ray.get(self.scheduler.reacted_events_type.remote()) and \
+                self.current_time % ray.get(self.scheduler.get_react_interval.remote()) == 0 and \
+                not self.cur_window_scheduled:
+
                 await self.reschedule()
                 self.cur_window_scheduled = True
 
@@ -88,6 +95,10 @@ class SimulatorActor:
 
             if len(self.running_jobs) > 0:
                 for job_id, job in self.running_jobs.items():
+                    if job_id not in self.schedule:
+                        logger.info(f"⏱️ [Simulator] Job {job_id} is not scheduled yet, skip...")
+                        continue
+
                     duration = self.schedule[job_id]['max_gpu_utilization'] * self.window_size
                     logger.info(f"⏱️ [Simulator] Running job {job_id} for {duration:.2f}s.")
                     if duration > 0:

@@ -2,6 +2,7 @@ import torch
 import time
 import os
 import ray
+import argparse
 from loguru import logger
 
 logger.remove()
@@ -14,10 +15,13 @@ from zraysched.utils.time import get_cur_time_str
 from examples.two_classification_apps.app_impl import DemoApplication_ResNet18, DemoApplication_MobileNet
 from examples.two_classification_apps.job_impl import DemoTrainingJob, DemoInferenceJob
 from examples.two_classification_apps.metrics_reporter import DemoReporter
-from schedulers.retraining import UniformScheduler, RECLScheduler
-
+from schedulers.retraining import UniformScheduler, RECLScheduler, EkyaScheduler
 
 async def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--scheduler", type=str, required=True, choices=["uniform", "recl", "ekya"])
+    args = parser.parse_args()
+
     if ray.is_initialized(): ray.shutdown()
     ray.init(_temp_dir="/data/zql/.ray_temp")
 
@@ -55,13 +59,25 @@ async def main():
     ]
 
     # choose a scheduler
-    # scheduler = UniformScheduler()
-    scheduler = RECLScheduler()
+    if args.scheduler == "uniform":
+        scheduler = ray.remote(UniformScheduler).remote()
+    elif args.scheduler == "recl":
+        scheduler = ray.remote(RECLScheduler).remote()
+    elif args.scheduler == "ekya":
+        scheduler = ray.remote(EkyaScheduler).remote(
+            react_interval=40, 
+            training_trial_duration=5, 
+            candidate_hyps=[
+                dict(lr=1e-3, batch_size=64),
+                dict(lr=2e-3, batch_size=128)
+            ]
+        )
 
     reporter = DemoReporter()
 
     simulator = SimulatorActor.remote(
-        apps, apps_events, scheduler, reporter, res_save_dir=f"examples/two_classification_apps/results/{get_cur_time_str()}"
+        apps, apps_events, scheduler, reporter, 
+        res_save_dir=f"examples/two_classification_apps/results/{args.scheduler}/{get_cur_time_str()}"
     )
 
     await simulator.run.remote()

@@ -4,7 +4,12 @@
 
 运行如下命令：
 ```bash
-python examples/two_classification_apps/main.py
+bash examples/two_classification_apps/main.sh
+
+# 运行所有调度器：
+# for scheduler in uniform recl ekya; do
+#     python examples/two_classification_apps/main.py --scheduler $scheduler
+# done
 ```
 
 其将按照以下事件顺序运行包括一个ResNet18应用的训练和推理作业和一个MobileNetV2应用的训练和推理作业：
@@ -39,4 +44,4 @@ apps_events=[
 ]
 ```
 
-目前支持Uniform和RECL两种训练调度器。其它调度器逐渐添加中。
+目前支持Uniform、RECL、Ekya三种训练调度器。其它调度器逐渐添加中。
