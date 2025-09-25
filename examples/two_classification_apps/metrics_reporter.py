@@ -35,7 +35,7 @@ class DemoReporter(Reporter):
         jobs_avg_metrics = {}
 
         for job_id, metrics in self.jobs_metrics.items():
-            jobs_avg_metrics[job_id] = {k: f'{v[-1][1]:.4f}' if len(v) > 0 else '(None)' for k, v in metrics.items()}
+            jobs_avg_metrics[job_id] = {k: f'{v[-1][1]:.4f}' if len(v) > 0 else '(None)' for k, v in metrics.items() if k in ['accuracies', 'losses']}
             logger.info(f"📊 [Report] Job {job_id} Metrics: {jobs_avg_metrics[job_id]}")
 
     def report_by_plot(self, save_dir):

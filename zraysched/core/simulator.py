@@ -100,9 +100,10 @@ class SimulatorActor:
                         continue
 
                     duration = self.schedule[job_id]['max_gpu_utilization'] * self.window_size
+                    hyps = self.schedule[job_id]['hyps'] if 'hyps' in self.schedule[job_id] else None
                     logger.info(f"⏱️ [Simulator] Running job {job_id} for {duration:.2f}s.")
                     if duration > 0:
-                        await job.run_for.remote(self.current_time, duration)
+                        await job.run_for.remote(self.current_time, duration, hyps=hyps)
 
                     self.reporter.accumulate_metrics(job_id, await job.get_metrics.remote())
 

@@ -7,7 +7,7 @@
 bash examples/two_classification_apps/main.sh
 
 # 运行所有调度器：
-# for scheduler in uniform recl ekya; do
+# for scheduler in uniform recl ekya eomu; do
 #     python examples/two_classification_apps/main.py --scheduler $scheduler
 # done
 ```
@@ -44,4 +44,4 @@ apps_events=[
 ]
 ```
 
-目前支持Uniform、RECL、Ekya三种训练调度器。其它调度器逐渐添加中。
+目前支持Uniform、RECL、Ekya、EOMU四种训练调度器。其它调度器逐渐添加中。

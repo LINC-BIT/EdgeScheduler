@@ -83,7 +83,8 @@ class EkyaScheduler(PeriodicScheduler):
             res[job_id] = {
                 'max_gpu_utilization': max(
                     (1. - inference_max_gpu_utilization * num_inference_jobs) * acc_improvements[job_id] / sum_acc_improvements - 0.01, 0.01) \
-                    if 'train' in job_id else inference_max_gpu_utilization
+                    if 'train' in job_id else inference_max_gpu_utilization,
+                'hyps': best_hyps[job_id] if 'train' in job_id else None,
             }
 
         self._cur_schedule = res

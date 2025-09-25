@@ -21,8 +21,10 @@ class DemoTrainingJob(TrainingJobActor):
 
         self.metrics = {
             'accuracies': [],
-            'losses': []
+            'losses': [],
+            'confidences_of_samples': []
         }
+
     async def run_for(self, current_time: int, duration: float, ensure_no_side_effects=False, hyps=None):
         await super().run_for(current_time, duration)
 
@@ -52,19 +54,35 @@ class DemoTrainingJob(TrainingJobActor):
             return res_x, res_y
 
         accs = []
+        confidences_of_samples = []
         avg_loss = 0.
         num_iters = 0
+
+        # TODO: define teacher model
+        teacher_model = None
+        if hyps is not None and 'teacher_model' in hyps:
+            if 'teacher_model' == 0:
+                teacher_model = model
+            elif 'teacher_model' == 1:
+                teacher_model = model
 
         start_time = time.time()
         while time.time() - start_time < duration:
             optimizer.zero_grad()
             x, y = get_a_batch()
+
+            if teacher_model is not None:
+                with torch.no_grad():
+                    teacher_model(x)
+
             output = model(x)
+            confidences_of_samples_cur_batch = output.softmax(dim=1).max(1)[0].cpu().detach().numpy().tolist()
             loss = torch.nn.functional.cross_entropy(output, y)
             loss.backward()
             optimizer.step()
 
             accs += [(output.argmax(dim=1) == y).float().mean().item()]
+            confidences_of_samples += confidences_of_samples_cur_batch
             avg_loss += loss.item()
             num_iters += 1
 
@@ -74,7 +92,8 @@ class DemoTrainingJob(TrainingJobActor):
         if not ensure_no_side_effects:
             await self.application_handle.update_model.remote(model.cpu())
             self.metrics['accuracies'].append((current_time, avg_acc))
-            self.metrics['losses'].append((current_time, loss.item()))
+            self.metrics['losses'].append((current_time, float(loss.item())))
+            self.metrics['confidences_of_samples'].append((current_time, confidences_of_samples))
         else:
             acc_improvement = accs[-1] - accs[0]
             avg_acc /= num_iters
