@@ -15,11 +15,11 @@ from zraysched.utils.time import get_cur_time_str
 from examples.two_classification_apps.app_impl import DemoApplication_ResNet18, DemoApplication_MobileNet
 from examples.two_classification_apps.job_impl import DemoTrainingJob, DemoInferenceJob
 from examples.two_classification_apps.metrics_reporter import DemoReporter
-from schedulers.retraining import UniformScheduler, RECLScheduler, EkyaScheduler, EOMUScheduler
+from schedulers.retraining import UniformScheduler, RECLScheduler, EkyaScheduler, EOMUScheduler, AdaInfScheduler
 
 async def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scheduler", type=str, required=True, choices=["uniform", "recl", "ekya", "eomu"])
+    parser.add_argument("--scheduler", type=str, required=True, choices=["uniform", "recl", "ekya", "eomu", "adainf"])
     args = parser.parse_args()
 
     if ray.is_initialized(): ray.shutdown()
@@ -84,6 +84,8 @@ async def main():
             ],
             low_confidence_threshold=0.2
         )
+    elif args.scheduler == "adainf":
+        scheduler = ray.remote(AdaInfScheduler).remote()
 
     reporter = DemoReporter()
 
